@@ -11,6 +11,13 @@ services:
         fromDatabase:
           name: quizzical-db
           property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: quizzical-redis
+          property: connectionString
+  - type: redis
+    name: quizzical-redis
+    ipAllowlist: []
 
 databases:
   - name: quizzical-db
