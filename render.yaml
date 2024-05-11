@@ -5,7 +5,7 @@ services:
     runtime: python
     repo: https://github.com/ipbrennan90/quizzical.git
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "python -m gunicorn run:app --workers 1 --threads 8 --bind"
+    startCommand: "python -m gunicorn run:app --workers 1 --threads 8"
     envVars:
       - key: DATABASE_URL # Sets DATABASE_URL to the connection string of the django-app-db database
         fromDatabase:
