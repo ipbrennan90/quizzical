@@ -17,7 +17,7 @@ services:
           property: connectionString
   - type: redis
     name: quizzical-redis
-    ipAllowlist: []
+    ipAllowList: []
 
 databases:
   - name: quizzical-db
