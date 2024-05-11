@@ -13,6 +13,7 @@ services:
           property: connectionString
       - key: REDIS_URL
         fromService:
+          type: redis
           name: quizzical-redis
           property: connectionString
   - type: redis
