@@ -13,5 +13,5 @@ services:
           property: connectionString
 
 databases:
-  - name: django-app-db # A PostgreSQL database named django-app-db running on a free instance
+  - name: quizzical-db
     plan: free
