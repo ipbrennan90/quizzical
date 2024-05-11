@@ -1,0 +1,17 @@
+services:
+  - type: web
+    plan: free
+    name: quizzical
+    runtime: python
+    repo: https://github.com/ipbrennan90/quizzical.git
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python -m gunicorn run:app --workers 1 --threads 8 --bind"
+    envVars:
+      - key: DATABASE_URL # Sets DATABASE_URL to the connection string of the django-app-db database
+        fromDatabase:
+          name: quizzical-db
+          property: connectionString
+
+databases:
+  - name: django-app-db # A PostgreSQL database named django-app-db running on a free instance
+    plan: free
