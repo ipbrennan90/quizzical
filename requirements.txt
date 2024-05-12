@@ -57,6 +57,7 @@ PyMuPDF==1.24.3
 PyMuPDFb==1.24.3
 python-dotenv==1.0.1
 PyYAML==6.0.1
+redis==5.0.4
 regex==2024.5.10
 requests==2.31.0
 sniffio==1.3.1
