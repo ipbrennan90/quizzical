@@ -33,7 +33,7 @@ def handle_query():
     return jsonify({ "data": { "namespace": namespace}, "status": { "code": 200, "message": "success"}})
 
 @api_blueprint.route('/chat', methods=['POST'])
-async def chat():
+def chat():
     request_data = request.get_json()
     query = request_data.get('question')
     namespace = request_data.get('namespace')
