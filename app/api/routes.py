@@ -1,5 +1,5 @@
 from . import api_blueprint
-from flask import request, jsonify
+from flask import request, jsonify, Response
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
 from langchain_community.chat_message_histories import RedisChatMessageHistory
@@ -15,6 +15,10 @@ from app.services.embeddings import Embeddings
 from app.services.vector_store import VectorStore
 from app.models.prompts import prompt
 
+def stream_chat(chain, query, config):
+  for chunk in chain.stream(query, config):
+    yield chunk
+
 
 @api_blueprint.route('/embed-resource', methods=['POST'])
 def handle_query():
@@ -29,7 +33,7 @@ def handle_query():
     return jsonify({ "data": { "namespace": namespace}, "status": { "code": 200, "message": "success"}})
 
 @api_blueprint.route('/chat', methods=['POST'])
-def chat():
+async def chat():
     request_data = request.get_json()
     query = request_data.get('question')
     namespace = request_data.get('namespace')
@@ -53,6 +57,4 @@ def chat():
 
     config = {"configurable": {"session_id": chat_session_id}}
 
-    response = chain_with_history.invoke({"question": query}, config=config)
-
-    return jsonify({ "data": response, "status": { "code": 200, "message": "success"}})
+    return Response(stream_chat(chain_with_history, { "question": query }, config), 200, {"Access-Control-Allow-Origin": "*"})
