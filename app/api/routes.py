@@ -20,20 +20,25 @@ def stream_chat(chain, query, config):
   for chunk in chain.stream(query, config):
     yield chunk
 
-def end_quiz(session):
-  session.update_session({ "mode": "tutor", "quiz_topic": "None", "question_count": 0})
+def start_quiz(session, quiz_topic):
+  session.new_session("quiz", quiz_topic=quiz_topic)
 
-def set_character(quiz_ended, character):
-  if(quiz_ended):
-    return character
-  else:
-    return f'{character}_quiz'
+def start_tutor(session):
+  session.new_session("tutor")
 
 def quiz_over(session):
   if session.session["mode"] == "quiz" and int(session.session["question_count"]) >= 5:
     return True
   else:
     return False
+
+@api_blueprint.route('/session', methods=['POST'])
+def check_session():
+  request_data = request.get_json()
+  chat_session_id = request_data.get('chat_session_id')
+  session = Session(chat_session_id).session
+
+  return jsonify({ "data": { "chat_session_id": session["id"] }, "status": { "code": 200, "message": "success"}})
 
 @api_blueprint.route('/embed-resource', methods=['POST'])
 def handle_query():
@@ -52,24 +57,23 @@ def handle_query():
 def chat():
   request_data = request.get_json()
   chat_session_id = request_data.get('chat_session_id')
+  query = request_data.get('question')
+  namespace = request_data.get('namespace')
+
 
   session = Session(chat_session_id)
 
 
+  if "quiz me on" in query.lower():
+    quiz_topic = query.lower().split("quiz me on ")[1]
+    start_quiz(session, quiz_topic)
 
-  query = request_data.get('question')
+  if session.session["mode"] == "quiz" and quiz_over(session):
+    start_tutor(session)
 
-  if "Quiz me on" in query:
-      quiz_topic = query.split("Quiz me on ")[1]
-      session.update_session({ "mode": "quiz", "quiz_topic": quiz_topic, "question_count": 0})
 
-  quiz_ended = quiz_over(session)
-  if quiz_ended:
-    end_quiz(session)
+  prompt_to_use = prompt(session.session["mode"], request_data.get('character'))
 
-  prompt_to_use = prompt(set_character(quiz_ended, request_data.get('character')))
-
-  namespace = request_data.get('namespace')
   vector_store = VectorStore(namespace=namespace)
   retriever = vector_store.retriever()
 
@@ -91,6 +95,8 @@ def chat():
   config = {"configurable": {"session_id": chat_session_id}}
 
   if session.session["mode"] == "quiz":
+    session.update_session({ "question_count": int(session.session["question_count"]) + 1})
+
     return Response(stream_chat(chain_with_history, { "question": query, "concept": session.session["quiz_topic"] }, config), 200, {"Access-Control-Allow-Origin": "*"})
   else:
     return Response(stream_chat(chain_with_history, { "question": query }, config), 200, {"Access-Control-Allow-Origin": "*"})

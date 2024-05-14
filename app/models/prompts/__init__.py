@@ -1,12 +1,12 @@
 from .steve_brule import SteveBrulePrompt
 from .steve_brule_quiz import SteveBruleQuizPrompt
 
-def prompt(character):
+def prompt(mode, character):
   if character == "steve_brule":
-    return SteveBrulePrompt().prompt
-  elif character == "steve_brule_quiz":
-    return SteveBruleQuizPrompt().prompt
-    return None
+    if mode == "tutor":
+      return SteveBrulePrompt().prompt
+    elif mode == "quiz":
+      return SteveBruleQuizPrompt().prompt
 
 
 
