@@ -32,6 +32,21 @@ def quiz_over(session):
   else:
     return False
 
+@api_blueprint.route('/configure', methods=['POST'])
+def configure_chat():
+  request_data = request.get_json()
+  study_content_url = request_data.get('studyContent')
+  study_content_name = request_data.get('studyContentName')
+
+  namespace = study_content_name.lower().replace(" ", "-")
+  loader = ResourceLoader(url = study_content_url)
+
+  docs = loader.to_text()
+  embeddings = Embeddings()
+  embeddings.embed(docs, embeddings_name=namespace)
+
+  return jsonify({ "data": { "namespace": namespace, "studyContentName": study_content_name}, "status": { "code": 200, "message": "success"}})
+
 @api_blueprint.route('/session', methods=['POST'])
 def check_session():
   request_data = request.get_json()
@@ -39,19 +54,6 @@ def check_session():
   session = Session(chat_session_id).session
 
   return jsonify({ "data": { "chat_session_id": session["id"] }, "status": { "code": 200, "message": "success"}})
-
-@api_blueprint.route('/embed-resource', methods=['POST'])
-def handle_query():
-    request_data = request.get_json()
-    url = request_data.get('url')
-    namespace = request_data.get('namespace')
-    loader = ResourceLoader(url = url)
-    docs = loader.to_text()
-    embeddings = Embeddings()
-    embeddings.embed(docs, embeddings_name=namespace)
-
-
-    return jsonify({ "data": { "namespace": namespace}, "status": { "code": 200, "message": "success"}})
 
 @api_blueprint.route('/chat', methods=['POST'])
 def chat():
@@ -68,6 +70,9 @@ def chat():
     quiz_topic = query.lower().split("quiz me on ")[1]
     start_quiz(session, quiz_topic)
 
+  if "stop quiz" in query.lower():
+    start_tutor(session)
+
   if session.session["mode"] == "quiz" and quiz_over(session):
     start_tutor(session)
 
@@ -79,7 +84,7 @@ def chat():
 
   prompt_template = ChatPromptTemplate.from_messages([("system", prompt_to_use), MessagesPlaceholder(variable_name="history"), ("human", "{question}")])
 
-  llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0, streaming=True)
+  llm = ChatOpenAI(model_name="gpt-4o", temperature=0, streaming=True)
 
   get_context = itemgetter("question") | retriever
   first_step = RunnablePassthrough.assign(context=get_context)
