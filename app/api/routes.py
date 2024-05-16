@@ -69,6 +69,8 @@ def chat():
   if "quiz me on" in query.lower():
     quiz_topic = query.lower().split("quiz me on ")[1]
     start_quiz(session, quiz_topic)
+  elif "quiz me" in query.lower():
+    start_quiz(session, "all")
 
   if "stop quiz" in query.lower():
     start_tutor(session)
@@ -77,7 +79,7 @@ def chat():
     start_tutor(session)
 
 
-  prompt_to_use = prompt(session.session["mode"], request_data.get('character'))
+  prompt_to_use = prompt(session.session["mode"], request_data.get('character'), quiz_topic=session.session["quiz_topic"])
 
   vector_store = VectorStore(namespace=namespace)
   retriever = vector_store.retriever()
@@ -100,8 +102,9 @@ def chat():
   config = {"configurable": {"session_id": chat_session_id}}
 
   if session.session["mode"] == "quiz":
-    session.update_session({ "question_count": int(session.session["question_count"]) + 1})
-
-    return Response(stream_chat(chain_with_history, { "question": query, "concept": session.session["quiz_topic"] }, config), 200, {"Access-Control-Allow-Origin": "*"})
+    if session.session["quiz_topic"] == "all":
+      return Response(stream_chat(chain_with_history, { "question": query }, config), 200)
+    else:
+      return Response(stream_chat(chain_with_history, { "question": query, "concept": session.session["quiz_topic"] }, config), 200)
   else:
-    return Response(stream_chat(chain_with_history, { "question": query }, config), 200, {"Access-Control-Allow-Origin": "*"})
+    return Response(stream_chat(chain_with_history, { "question": query }, config), 200)
