@@ -6,6 +6,8 @@ from langchain_community.chat_message_histories import RedisChatMessageHistory
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain.schema import StrOutputParser
+from langsmith.wrappers import wrap_openai
+from langsmith import traceable
 
 from operator import itemgetter
 import os
@@ -33,6 +35,7 @@ def quiz_over(session):
     return False
 
 @api_blueprint.route('/configure', methods=['POST'])
+@traceable
 def configure_chat():
   request_data = request.get_json()
   study_content_url = request_data.get('studyContent')
@@ -56,6 +59,7 @@ def check_session():
   return jsonify({ "data": { "chat_session_id": session["id"] }, "status": { "code": 200, "message": "success"}})
 
 @api_blueprint.route('/chat', methods=['POST'])
+@traceable
 def chat():
   request_data = request.get_json()
   chat_session_id = request_data.get('chat_session_id')
